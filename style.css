@@ -1,0 +1,3 @@
+.map-container {
+    height: 400px; /* height must be specified or map will not appear */
+}
