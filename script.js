@@ -98,3 +98,54 @@ map.on('load', () => {
     });
     
 });
+// non-map page interactivity
+
+$(document).ready(function() {
+    $("#btnWalk").hover(function() {
+        $(this).addClass("iconfilter-hover")
+    }, function() {
+        $(this).removeClass("iconfilter-hover")
+    })
+    $("#btnBike").hover(function() {
+        $(this).addClass("iconfilter-hover")
+    }, function() {
+        $(this).removeClass("iconfilter-hover")
+    })
+    $("#btnTransit").hover(function() {
+        $(this).addClass("iconfilter-hover")
+    }, function() {
+        $(this).removeClass("iconfilter-hover")
+    })
+    $("#btnCar").hover(function() {
+        $(this).addClass("iconfilter-hover")
+    }, function() {
+        $(this).removeClass("iconfilter-hover")
+    })
+    $("#btnWalk").click(function() {
+        $(this).addClass("iconfilter-clicked")
+        $("#btnBike").removeClass("iconfilter-clicked")
+        $("#btnTransit").removeClass("iconfilter-clicked")
+        $("#btnCar").removeClass("iconfilter-clicked")
+    })
+    $("#btnBike").click(function() {
+        $(this).addClass("iconfilter-clicked")
+        $("#btnWalk").removeClass("iconfilter-clicked")
+        $("#btnTransit").removeClass("iconfilter-clicked")
+        $("#btnCar").removeClass("iconfilter-clicked")
+    })
+    $("#btnTransit").click(function() {
+        $(this).addClass("iconfilter-clicked")
+        $("#btnBike").removeClass("iconfilter-clicked")
+        $("#btnWalk").removeClass("iconfilter-clicked")
+        $("#btnCar").removeClass("iconfilter-clicked")
+    })
+    $("#btnCar").click(function() {
+        $(this).addClass("iconfilter-clicked")
+        $("#btnBike").removeClass("iconfilter-clicked")
+        $("#btnTransit").removeClass("iconfilter-clicked")
+        $("#btnWalk").removeClass("iconfilter-clicked")
+    })
+    $("#chain-select").click(function() {
+        console.log("Selected " + $(this).val())
+    })
+})
