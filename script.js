@@ -7,6 +7,19 @@ const map = new mapboxgl.Map({
 });
 
 map.on('load', () => {
+
+    //Add search control to map overlay
+    //Requires plugin as source in HTML body
+    map.addControl(
+        new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl,
+            countries: "ca" //Try searching for places inside and outside of canada to test the geocoder
+        })
+    );
+
+    //Add zoom and rotation controls to the map.
+    map.addControl(new mapboxgl.NavigationControl());
     // add geoJSON source files
     // fs-data is field stations (points)
     // provpark-data is federal protected areas (polygons)
