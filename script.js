@@ -6,6 +6,16 @@ const map = new mapboxgl.Map({
     zoom: 10
 });
 
+const returnbutton = document.getElementById("returnbutton")
+
+returnbutton.addEventListener('click', (e) => {
+    map.flyTo({
+        center: [-79.41, 43.7],
+        zoom: 10,
+        essential: true
+    })
+})
+
 map.on('load', () => {
 
     //Add search control to map overlay
