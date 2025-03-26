@@ -1,9 +1,9 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoiZHJpbm5pcmQiLCJhIjoiY201b2RyYXRhMGt1YTJvcHQ4ZjU4dDYycSJ9.jHNRKSu149-F5s157m1GwA'; // Add default public map token from your Mapbox account
 const map = new mapboxgl.Map({
     container: 'my-map', // map container ID
-    style: 'mapbox://styles/drinnird/cm6twaxlw01bc01ryeat9ddox', // style URL
-    center: [-79.39, 46.662], // starting position [lng, lat]
-    zoom: 4
+    style: 'mapbox://styles/mapbox/light-v11', // style URL
+    center: [-79.41, 43.7], // starting position [lng, lat]
+    zoom: 10
 });
 
 map.on('load', () => {
@@ -21,41 +21,57 @@ map.on('load', () => {
     //Add zoom and rotation controls to the map.
     map.addControl(new mapboxgl.NavigationControl());
     // add geoJSON source files
-    // fs-data is field stations (points)
-    // provpark-data is federal protected areas (polygons)
-    map.addSource('fs-data', {
+    // torboundary-data - toronto boundary line
+    // torneigh-data is toronto neighbourhoods (polygons)
+    // supermarkets.geoJSON is a point feature collection of all the supermarkets in Toronto
+    map.addSource('torboundary-data', {
         type: 'geojson',
-        data: 'https://drinnnird-uoft.github.io/ggr472-lab02/data/fs.geojson' // Your URL to your buildings.geojson file
+        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/tor_boundry.geojson'
     });
 
-    map.addSource('provpark-data', {
+    map.addSource('torneigh-data', {
         type: 'geojson',
-        data: 'https://drinnnird-uoft.github.io/ggr472-lab02/data/provpark.geojson' // Your URL to your buildings.geojson file
+        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/tor_neigh.geojson'
     });
+
+    map.addSource('super-data', {
+        type: 'geojson',
+        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets.geoJSON'
+    })
 
     // draw features from geoJSON source files
 
-    // draw field stations as purple circles
+    // draw boundary as grey lines
     map.addLayer({
-        'id': 'fs-point',
-        'type': 'circle',
-        'source': 'fs-data',
+        'id': 'torboundary-line',
+        'type': 'line',
+        'source': 'torboundary-data',
         'paint': {
-            'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 15, 10, 22, 15], /* make the dot get bigger as the zoom level increases */
-            'circle-color': '#9326ff'
+            'line-color' : '#6D6D6D'
         }
     });
 
-    // shade in provincial park areas with partial transparency
+    // draw neighbourhoods as lighter grey lines
     map.addLayer({
-        'id': 'provpark-poly',
-        'type': 'fill',
-        'source': 'provpark-data',
-        'paint': {
-            'fill-color': '#888888', // Test alternative colours and style properties
-            'fill-opacity': 0.7,
-            'fill-outline-color': '#9326ff'
+        'id' : 'torneigh-line',
+        'type' : 'line',
+        'source' : 'torneigh-data',
+        'paint' : {
+            'line-color' : '#A2A2A2'
         }
+    })
+
+    // draw supermarkets as blue dots, adjusting dot size with zoom
+    map.addLayer({
+        'id' : 'super-point',
+        'type' : 'circle',
+        'source' : 'super-data',
+        'paint': {
+                'circle-color': '#4264fb',
+                'circle-radius': 6,
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff'
+            }
     })
 
     // Create a popup, but don't add it to the map yet.
@@ -64,35 +80,19 @@ map.on('load', () => {
         closeOnClick: false
     });
 
-    // create dynamically generated popups based on the properties set in the geoJSON file
-    map.on('mouseenter', 'fs-point', (e) => {
+    map.on('mouseenter', 'super-point', (e) => {
         // Change the cursor style as a UI indicator.
         map.getCanvas().style.cursor = 'pointer';
 
         // Copy coordinates array.
-        // extract properties we want to build the HTML string
-        const coordinates = e.features[0].geometry.coordinates.slice(); // get the coordinates of the hovered-over location
-        const description = e.features[0].properties.placeName; // extract the place name of this location
-        const ecosystems = JSON.parse(e.features[0].properties.ecosystems); // extract the list of ecosystems for this location, JSONparse because it is a JSON array but has been loaded by AJAX as an unparsed string
-        const unilinked = e.features[0].properties.universityLinked; // whether the location is university-linked
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const description = e.features[0].properties.name;
 
-        // build the HTML that will be dynamically appended to the popup
-        let formattedHTML = '<p><b>' +
-            description +
-            '</b><br />' +
-            'Linked to a university? ' + unilinked + '<br />' +
-            "Connected ecosystems: ";
-
-        // iterate through ecosystems to produce a list
-        ecosystems.forEach(function (entry) {
-            formattedHTML += entry + ', '
-        });
-
-        formattedHTML = formattedHTML.replace(/,\s*$/, ""); // remove trailing comma with regex
+        console.log(e.features[0].properties)
 
         // Ensure that if the map is zoomed out such that multiple
         // copies of the feature are visible, the popup appears
-        // over the copy being pointed to. (tutorial suggested this)
+        // over the copy being pointed to.
         if (['mercator', 'equirectangular'].includes(map.getProjection().name)) {
             while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
                 coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
@@ -101,19 +101,20 @@ map.on('load', () => {
 
         // Populate the popup and set its coordinates
         // based on the feature found.
-        popup.setLngLat(coordinates).setHTML('<b>' + formattedHTML + "</b><br />").addTo(map);
+        popup.setLngLat(coordinates).setHTML(description).addTo(map);
     });
 
-    // hide the popups when the mouse stops hovering over a location
-    map.on('mouseleave', 'fs-point', () => {
+    map.on('mouseleave', 'super-point', () => {
         map.getCanvas().style.cursor = '';
         popup.remove();
     });
-    
-});
-// non-map page interactivity
+
+})
 
 $(document).ready(function() {
+    // interactivity handling for the buttons that allow you to select which
+    // mode of transport you want to calculate for
+    // handle colorizing the buttons on hover and click
     $("#btnWalk").hover(function() {
         $(this).addClass("iconfilter-hover")
     }, function() {
@@ -161,4 +162,17 @@ $(document).ready(function() {
     $("#chain-select").click(function() {
         console.log("Selected " + $(this).val())
     })
+
+
+    // inspect the properties of the geoJSON file
+    let superjson;
+
+    fetch('https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets.geoJSON')
+    .then(response => response.json())
+    .then(response => {
+        superjson = response;
+        
+        // get a set of unique grocery chains
+
+    });
 })
