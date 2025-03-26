@@ -71,7 +71,8 @@ map.on('load', () => {
                 'circle-radius': 6,
                 'circle-stroke-width': 2,
                 'circle-stroke-color': '#ffffff'
-            }
+        },
+        'filter': ['all', ['has', 'brand'], ['!=', ['get', 'brand'], null]] // show only supermarkets that have a brand set
     })
 
     // Create a popup, but don't add it to the map yet.
