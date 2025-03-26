@@ -18,6 +18,16 @@ returnbutton.addEventListener('click', (e) => {
 
 map.on('load', () => {
 
+    // load custom image into the map style
+    map.loadImage(
+        'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/img/blue-circle-small.png',
+        (error, image) => {
+            if (error) throw error;
+
+            // Add the image to the map style.
+            map.addImage('circle-blue-sm', image);
+    });
+
     //Add search control to map overlay
     //Requires plugin as source in HTML body
     map.addControl(
@@ -91,6 +101,10 @@ map.on('load', () => {
         closeOnClick: false
     });
 
+    // note: Mapbox has a known issue with mouseenter and mouseleave for circle layers
+    // the points are right-biased meaning you have to mouse over the right edge of the circle
+    // rather than the center
+    // attempted workaround using symbol layer instead of circle layer but had the same problem
     map.on('mouseenter', 'super-point', (e) => {
         // Change the cursor style as a UI indicator.
         map.getCanvas().style.cursor = 'pointer';
