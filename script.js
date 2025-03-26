@@ -99,7 +99,7 @@ map.on('load', () => {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const description = e.features[0].properties.name;
 
-        console.log(e.features[0].properties)
+        //console.log(e.features[0].properties)
 
         // Ensure that if the map is zoomed out such that multiple
         // copies of the feature are visible, the popup appears
@@ -178,13 +178,33 @@ $(document).ready(function() {
 
     // inspect the properties of the geoJSON file
     let superjson;
+    let brands = [];
+    let brandselect = document.getElementById("chain-select");
 
     fetch('https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets.geoJSON')
     .then(response => response.json())
     .then(response => {
         superjson = response;
-        
+        console.log(superjson);
         // get a set of unique grocery chains
+        let supermarkets = superjson.features;
+
+        supermarkets.forEach((label, i) => {
+            let item = supermarkets[i];
+            if(item.properties.brand !== undefined && item.properties.brand !== null) {
+                if(!brands.includes(item.properties.brand)) {
+                    brands.push(item.properties.brand)
+                }
+            }
+        });
+
+        brands.sort();
+
+        brands.forEach((label, i) => {
+            let opt = document.createElement('option');
+            opt.text = opt.value = label;
+            brandselect.add(opt)
+        })
 
     });
 })
