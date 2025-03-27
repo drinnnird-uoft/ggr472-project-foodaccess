@@ -346,8 +346,6 @@ $(document).ready(function() {
             }
         });
 
-        brands.push("Walmart"); // debugging, remove this later
-
         brands.sort();
 
         brands.forEach((label, i) => {
