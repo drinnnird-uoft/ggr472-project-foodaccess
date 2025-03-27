@@ -71,7 +71,8 @@ map.on('load', () => {
 
     map.addSource('super-data', {
         type: 'geojson',
-        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets.geoJSON'
+        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets.geoJSON',
+        'generateId' : true
     })
 
     map.addSource('sample-data', {
@@ -345,6 +346,8 @@ $(document).ready(function() {
                 }
             }
         });
+
+        brands.push("Walmart"); // debugging, remove later
 
         brands.sort();
 
