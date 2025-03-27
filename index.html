@@ -79,16 +79,16 @@
                 <div class="row">
                     <div class="col">
                         <!-- transit filter images from bootstrap SVG -->
-                        <button id="btnWalk" class="bi-person-walking iconfilter iconfilter-clicked"></button>
+                        <button id="btnWalk" class="bi-person-walking iconfilter"></button>
                         <button id="btnBike" class="bi-bicycle iconfilter"></button>
-                        <button id="btnTransit" class="bi-bus-front iconfilter"></button>
+                        <button id="btnTransit" class="bi-bus-front iconfilter  iconfilter-clicked"></button>
                         <button id="btnCar" class="bi-car-front iconfilter"></button>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col"><label for="chains">Choose a grocery chain:</label>
                         <select id="chain-select" name="chains">
-                            <option value="ALL">All</option>
+                            <option value="0">Select...</option>
                             <!-- add options with javascript -->
                         </select>
 
@@ -96,7 +96,7 @@
                 </div>
                 <hr />
                 <div class="row">
-                    <div class="col">Placeholder for map information when map clicked</div>
+                    <div class="col" id="click-info">Placeholder for map information when map clicked</div>
                 </div>
             </div>
         </div>
