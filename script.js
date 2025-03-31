@@ -107,6 +107,8 @@ const recalcLegend = (json, mode, chain) => {
         legend.appendChild(item); //add row to the legend
     })
 
+    
+
     // update the step color scheme on the hexgrid layer
     map.setPaintProperty('res7-poly', 'fill-color', 
         [
@@ -119,6 +121,17 @@ const recalcLegend = (json, mode, chain) => {
             upper, "#b30000"
         ]
     )
+
+    map.setPaintProperty('res7-poly', 'fill-opacity', [
+        'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                1,  // opaque when hovered on
+                0.5 // semi-transparent when not hovered on
+    ])
+
+    // map.setFilter('res7-poly', ['all', ['has', 'travel_time'], ['!=', ['get', 'travel_time'], null]])
+
+    
 }
 
 map.on('load', () => {
@@ -361,7 +374,7 @@ map.on('load', () => {
             ],
             'fill-outline-color': 'white'
             },
-             'filter': ['all', ['has', 'travel_time'], ['!=', ['get', 'travel_time'], null]] // show only hexgrid points that have a travel time set
+            //  'filter': ['all', ['has', 'travel_time'], ['!=', ['get', 'travel_time'], null]] // show only hexgrid points that have a travel time set
         })
 
         // hide the hexgrid at first until something is selected in the dropdown
@@ -405,8 +418,8 @@ map.on('load', () => {
                 // show hexgrid cells that match the currently selected travel mode AND brand
                 // AND also require that the travel time not be null or missing
                 map.setFilter('res7-poly', ['all', ['all', 
-                        ['has', 'travel_time'],
-                        ['!=', ['get', 'travel_time'], null],
+                        // ['has', 'travel_time'],
+                        // ['!=', ['get', 'travel_time'], null],
                         ['==', ['get', 'brand'], sel],
                     ['==', ['get', 'transport_mode'], currmode]
                 ]]);
