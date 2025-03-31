@@ -10,6 +10,7 @@ const returnbutton = document.getElementById("returnbutton")
 
 let hoveredPolygonId = null; // set variable to hold ID of polygon hovered on, initialize to null
 
+// listener to zoom the map back to full extents
 returnbutton.addEventListener('click', (e) => {
     map.flyTo({
         center: [-79.41, 43.7],
@@ -34,9 +35,13 @@ const quantile = (arr, q) => {
     }
 };
 
-let traveltimesjson;
+let traveltimesjson; // need this variable in several places, define it in the outermost scope
 
 // recalculate the legend
+// used by several click handlers
+// json the fetched json data holding the travel times
+// mode the selected mode of transport
+// chain the selected grocery store chain
 const recalcLegend = (json, mode, chain) => {
     $("#legend").html("<h6>Travel Times</h6>"); // clear previous legend
 
@@ -102,6 +107,7 @@ const recalcLegend = (json, mode, chain) => {
         legend.appendChild(item); //add row to the legend
     })
 
+    // update the step color scheme on the hexgrid layer
     map.setPaintProperty('res7-poly', 'fill-color', 
         [
             "step",
@@ -143,6 +149,7 @@ map.on('load', () => {
     // torboundary-data - toronto boundary line
     // torneigh-data is toronto neighbourhoods (polygons)
     // supermarkets.geoJSON is a point feature collection of all the supermarkets in Toronto
+    // all_travel_times_res7.geojson is the travel time data and hexgrids
     map.addSource('torboundary-data', {
         type: 'geojson',
         data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/tor_boundry.geojson'
@@ -207,6 +214,7 @@ map.on('load', () => {
         closeOnClick: false
     });
 
+    // set up a mousemove event handler to toggle a feature state on the heatmap layer
     map.on('mousemove', 'res7-poly', (e) => {
         map.getCanvas().style.cursor = 'pointer'; // update the mouse cursor to a pointer to indicate clickability
         if (e.features.length > 0) {
@@ -224,7 +232,7 @@ map.on('load', () => {
         }
     })
 
-    // When the mouse leaves the nh-poly layer, update the feature state of the
+    // When the mouse leaves the heatmap layer, update the feature state of the
     // previously hovered feature.
     map.on('mouseleave', 'res7-poly', () => {
         map.getCanvas().style.cursor = ''; // put the mouse cursor back to default
@@ -380,11 +388,11 @@ map.on('load', () => {
             console.log("Selected " + sel)
 
             // get currently selected travel method
-            const sel_travel_mode = $(".iconfilter-clicked");
+            const sel_travel_mode = $(".iconfilter-clicked"); // the selected transit mode will have this class set
             let currmode = 'transit';
             if(sel_travel_mode.length == 1) {
-                const pieces = sel_travel_mode[0].id.split("btn");
-                currmode = pieces[1].toLowerCase();
+                const pieces = sel_travel_mode[0].id.split("btn"); // the icons are named btnBike, btnCar, etc...
+                currmode = pieces[1].toLowerCase(); // the geoJSON file has all lowercase properties, so lowercase to match
             }
 
             if(sel !== 0) {
@@ -392,6 +400,10 @@ map.on('load', () => {
                 // show the hexgrid for that selection
                 
                 map.setLayoutProperty("res7-poly", "visibility", "visible");
+
+                // big filter expression that means 
+                // show hexgrid cells that match the currently selected travel mode AND brand
+                // AND also require that the travel time not be null or missing
                 map.setFilter('res7-poly', ['all', ['all', 
                         ['has', 'travel_time'],
                         ['!=', ['get', 'travel_time'], null],
@@ -411,8 +423,10 @@ $(document).ready(function() {
     // interactivity handling for the buttons that allow you to select which
     // mode of transport you want to calculate for
     // handle colorizing the buttons on hover and click
+    
     // hide legend until a layer is selected
     $("#legend").hide();
+    
     $("#btnWalk").hover(function() {
         $(this).addClass("iconfilter-hover")
     }, function() {
