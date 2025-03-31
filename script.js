@@ -212,6 +212,47 @@ map.on('load', () => {
         const q3 = quantile(ttimes, 0.75);
         const upper = Math.max.apply(null, ttimes);
 
+        // build and render legend
+        // declare legend variable using legend div tag
+        const legend = document.getElementById("legend");
+
+        const legendlabels = [
+            '0-' + (q1-1) + ' minutes',
+            q1 + '-' + (med-1) + ' minutes',
+            med + '-' + (q3-1) + ' minutes',
+            q3 + '-' + (upper-1) + ' minutes',
+            upper + ' minutes'
+        ]
+
+        console.log(legendlabels)
+
+        const legendcolors = [
+            '#fef0d9',
+            '#fdcc8a',
+            '#fc8d59',
+            '#e34a33',
+            '#b30000'
+        ]
+
+        // for each legend label, create a block to put the color and label in
+        legendlabels.forEach((label, i) => {
+            const color = legendcolors[i];
+
+            const item = document.createElement('div') //each layer gets a 'row' - this isn't in the legend yet, we do this later
+            const key = document.createElement('span') //add a 'key' to the row. A key will be the colour circle
+
+            key.className = 'legend-key'; //the key will take on the shape and style properties defined in css
+            key.style.backgroundColor = color; // the background color is retreived from teh layers array
+
+            const value = document.createElement('span'); //add a value variable to the 'row' in the legend
+            value.innerHTML = `${label}`; //give the value variable text based on the label
+
+            item.appendChild(key); //add the key (colour cirlce) to the legend row
+            item.appendChild(value); //add the value to the legend row
+        
+            legend.appendChild(item); //add row to the legend
+        })
+
         map.addLayer({
             'id' : 'sample-poly',
             'type' : 'fill',
@@ -253,8 +294,14 @@ map.on('load', () => {
         })
     })
 
+    /* HTML INTERACTIVITY HANDLERS */
+
     // click handler for selecting a brand inside map load because the map must be loaded to apply filters
     $("#chain-select").change(function() {
+        // unhide the legend
+        $("#legend").show();
+
+
         let sel = $(this).val();
         console.log("Selected " + sel)
 
@@ -279,6 +326,8 @@ $(document).ready(function() {
     // interactivity handling for the buttons that allow you to select which
     // mode of transport you want to calculate for
     // handle colorizing the buttons on hover and click
+    // hide legend until a layer is selected
+    $("#legend").hide();
     $("#btnWalk").hover(function() {
         $(this).addClass("iconfilter-hover")
     }, function() {
@@ -325,7 +374,7 @@ $(document).ready(function() {
     })
 
 
-    // inspect the properties of the geoJSON file
+    // populate the brands dropdown with brands from the geoJSON file
     let superjson;
     let brands = [];
     let brandselect = document.getElementById("chain-select");
