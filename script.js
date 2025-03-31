@@ -18,9 +18,12 @@ returnbutton.addEventListener('click', (e) => {
     })
 })
 
+// function to stort ascending
+const asc = arr => arr.sort((a, b) => a - b);
+
 // function to find quantiles, for choropleth mapping
 const quantile = (arr, q) => {
-    const sorted = arr.sort();
+    const sorted = asc(arr);
     const pos = (sorted.length - 1) * q;
     const base = Math.floor(pos);
     const rest = pos - base;
@@ -30,6 +33,87 @@ const quantile = (arr, q) => {
         return sorted[base];
     }
 };
+
+let traveltimesjson;
+
+// recalculate the legend
+const recalcLegend = (json, mode, chain) => {
+    $("#legend").html("<h6>Travel Times</h6>"); // clear previous legend
+
+    traveltimesjson = json;
+
+    // get quartiles for choropleth scaling
+    let ttimes = [];
+
+    traveltimesjson.features.forEach((label, i) => {
+        let feature = traveltimesjson.features[i];
+        let props = feature.properties;
+        if(props.brand == chain && props.transport_mode == mode) { // only use travel times for selected brand and method
+            let travtime = props.travel_time;
+            if(travtime != null) {
+                ttimes.push(travtime) 
+            }
+            
+        }
+
+    })
+
+    const q1 = quantile(ttimes, 0.25);
+    const med = quantile(ttimes, 0.5);
+    const q3 = quantile(ttimes, 0.75);
+    const upper = Math.max.apply(null, ttimes);
+
+    // build and render legend
+    // declare legend variable using legend div tag
+    const legend = document.getElementById("legend");
+
+    let legendlabels = [
+        '0-' + (q1-1) + ' minutes',
+        q1 + '-' + (med-1) + ' minutes',
+        med + '-' + (q3-1) + ' minutes',
+        q3 + '-' + (upper-1) + ' minutes',
+        upper + ' minutes'
+    ]
+
+    const legendcolors = [
+        '#fef0d9',
+        '#fdcc8a',
+        '#fc8d59',
+        '#e34a33',
+        '#b30000'
+    ]
+
+    // for each legend label, create a block to put the color and label in
+    legendlabels.forEach((label, i) => {
+        const color = legendcolors[i];
+
+        const item = document.createElement('div') //each layer gets a 'row' - this isn't in the legend yet, we do this later
+        const key = document.createElement('span') //add a 'key' to the row. A key will be the colour circle
+
+        key.className = 'legend-key'; //the key will take on the shape and style properties defined in css
+        key.style.backgroundColor = color; // the background color is retreived from teh layers array
+
+        const value = document.createElement('span'); //add a value variable to the 'row' in the legend
+        value.innerHTML = `${label}`; //give the value variable text based on the label
+
+        item.appendChild(key); //add the key (colour cirlce) to the legend row
+        item.appendChild(value); //add the value to the legend row
+    
+        legend.appendChild(item); //add row to the legend
+    })
+
+    map.setPaintProperty('res7-poly', 'fill-color', 
+        [
+            "step",
+            ["get", "travel_time"],
+            "#fef0d9",
+            q1, "#fdcc8a",
+            med, "#fc8d59",
+            q3, "#e34a33",
+            upper, "#b30000"
+        ]
+    )
+}
 
 map.on('load', () => {
 
@@ -81,6 +165,12 @@ map.on('load', () => {
         'generateId': true //This ensures that all features have unique IDs 
     })
 
+    map.addSource('res7-data', {
+        type: 'geojson',
+        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/all_travel_times_res7.geojson',
+        'generateId' : true
+    })
+
     // draw features from geoJSON source files
 
     // draw boundary as grey lines
@@ -123,18 +213,18 @@ map.on('load', () => {
         closeOnClick: false
     });
 
-    map.on('mousemove', 'sample-poly', (e) => {
+    map.on('mousemove', 'res7-poly', (e) => {
         map.getCanvas().style.cursor = 'pointer'; // update the mouse cursor to a pointer to indicate clickability
         if (e.features.length > 0) {
             if (hoveredPolygonId !== null) {
                 map.setFeatureState(
-                    { source: 'sample-data', id: hoveredPolygonId },
+                    { source: 'res7-data', id: hoveredPolygonId },
                     { hover: false }
                 );
             }
             hoveredPolygonId = e.features[0].id;
             map.setFeatureState(
-                { source: 'sample-data', id: hoveredPolygonId },
+                { source: 'res7-data', id: hoveredPolygonId },
                 { hover: true }
             );
         }
@@ -142,11 +232,11 @@ map.on('load', () => {
 
     // When the mouse leaves the nh-poly layer, update the feature state of the
     // previously hovered feature.
-    map.on('mouseleave', 'sample-poly', () => {
+    map.on('mouseleave', 'res7-poly', () => {
         map.getCanvas().style.cursor = ''; // put the mouse cursor back to default
         if (hoveredPolygonId !== null) {
             map.setFeatureState(
-                { source: 'sample-data',id: hoveredPolygonId },
+                { source: 'res7-data',id: hoveredPolygonId },
                 { hover: false }
             );
         }
@@ -164,8 +254,6 @@ map.on('load', () => {
         // Copy coordinates array.
         const coordinates = e.features[0].geometry.coordinates.slice();
         const description = e.features[0].properties.name;
-
-        //console.log(e.features[0].properties)
 
         // Ensure that if the map is zoomed out such that multiple
         // copies of the feature are visible, the popup appears
@@ -189,20 +277,18 @@ map.on('load', () => {
 
     // go through travel time data to build color ramp
 
-    let samplejson;
-
-    fetch('https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/walmart_transit_sample.geoJSON')
+    fetch('https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/all_travel_times_res7.geojson')
     .then(response => response.json())
     .then(response => {
-        samplejson = response;
-        console.log(samplejson);
+        traveltimesjson = response;
 
         // get quartiles for choropleth scaling
         let ttimes = [];
 
-        samplejson.features.forEach((label, i) => {
-            let feature = samplejson.features[i];
+        traveltimesjson.features.forEach((label, i) => {
+            let feature = traveltimesjson.features[i];
             let props = feature.properties;
+            // handle selected brand here
             let travtime = props.travel_time;
             ttimes.push(travtime) 
         })
@@ -216,15 +302,13 @@ map.on('load', () => {
         // declare legend variable using legend div tag
         const legend = document.getElementById("legend");
 
-        const legendlabels = [
+        let legendlabels = [
             '0-' + (q1-1) + ' minutes',
             q1 + '-' + (med-1) + ' minutes',
             med + '-' + (q3-1) + ' minutes',
             q3 + '-' + (upper-1) + ' minutes',
             upper + ' minutes'
         ]
-
-        console.log(legendlabels)
 
         const legendcolors = [
             '#fef0d9',
@@ -254,9 +338,9 @@ map.on('load', () => {
         })
 
         map.addLayer({
-            'id' : 'sample-poly',
+            'id' : 'res7-poly',
             'type' : 'fill',
-            'source' : 'sample-data',
+            'source' : 'res7-data',
             'paint': {
                 "fill-color" : [
                     "step",
@@ -279,10 +363,10 @@ map.on('load', () => {
         })
 
         // hide the hexgrid at first until something is selected in the dropdown
-        map.setLayoutProperty("sample-poly", 'visibility', 'none');
+        map.setLayoutProperty("res7-poly", 'visibility', 'none');
 
         // handle clicking on a hexgrid item
-        map.on('click', 'sample-poly', (e) => {
+        map.on('click', 'res7-poly', (e) => {
             const coordinates = e.features[0].geometry.coordinates.slice();
             const travel_time = e.features[0].properties.travel_time;
 
@@ -292,34 +376,41 @@ map.on('load', () => {
                 $("#click-info").html("Travel time to " + $("#chain-select").val() + " by " + pieces[1] + " is " + travel_time + "m.");
             }
         })
+
+        // click handler for selecting a brand inside map load because the map must be loaded to apply filters
+        $("#chain-select").change(function() {
+            // unhide the legend
+            $("#legend").show();
+
+            let sel = $(this).val();
+            console.log("Selected " + sel)
+
+            // get currently selected travel method
+            const sel_travel_mode = $(".iconfilter-clicked");
+            let currmode = 'transit';
+            if(sel_travel_mode.length == 1) {
+                const pieces = sel_travel_mode[0].id.split("btn");
+                currmode = pieces[1].toLowerCase();
+            }
+
+            if(sel !== 0) {
+                // if something has been selected
+                // show the hexgrid for that selection
+                
+                map.setLayoutProperty("res7-poly", "visibility", "visible");
+                map.setFilter('res7-poly', ['all', ['all', 
+                        ['has', 'travel_time'],
+                        ['!=', ['get', 'travel_time'], null],
+                        ['==', ['get', 'brand'], sel],
+                    ['==', ['get', 'transport_mode'], currmode]
+                ]]);
+
+                map.setFilter('super-point', ['==', ['get','brand'], sel]); // show only supermarkets that match requested brand
+
+                recalcLegend(response, currmode, sel)
+            }
+        })
     })
-
-    /* HTML INTERACTIVITY HANDLERS */
-
-    // click handler for selecting a brand inside map load because the map must be loaded to apply filters
-    $("#chain-select").change(function() {
-        // unhide the legend
-        $("#legend").show();
-
-
-        let sel = $(this).val();
-        console.log("Selected " + sel)
-
-        if(sel !== 0) {
-            // if something has been selected
-            // show the hexgrid for that selection
-            
-            map.setLayoutProperty("sample-poly", "visibility", "visible");
-            map.setFilter('sample-poly', ['all', 
-                ['has', 'travel_time'],
-                ['!=', ['get', 'travel_time'], null],
-                ['==', ['get', 'brand'], sel]
-            ]);
-
-            map.setFilter('super-point', ['==', ['get','brand'], sel]); // show only supermarkets that match requested brand
-        }
-    })
-
 })
 
 $(document).ready(function() {
@@ -353,24 +444,40 @@ $(document).ready(function() {
         $("#btnBike").removeClass("iconfilter-clicked")
         $("#btnTransit").removeClass("iconfilter-clicked")
         $("#btnCar").removeClass("iconfilter-clicked")
+        let chain = $("#chain-select").find(":selected").val();
+        if(chain != 0) {
+            recalcLegend(traveltimesjson, "walk", chain);
+        }
     })
     $("#btnBike").click(function() {
         $(this).addClass("iconfilter-clicked")
         $("#btnWalk").removeClass("iconfilter-clicked")
         $("#btnTransit").removeClass("iconfilter-clicked")
         $("#btnCar").removeClass("iconfilter-clicked")
+        let chain = $("#chain-select").find(":selected").val();
+        if(chain != 0) {
+            recalcLegend(traveltimesjson, "bike", chain);
+        }
     })
     $("#btnTransit").click(function() {
         $(this).addClass("iconfilter-clicked")
         $("#btnBike").removeClass("iconfilter-clicked")
         $("#btnWalk").removeClass("iconfilter-clicked")
         $("#btnCar").removeClass("iconfilter-clicked")
+        let chain = $("#chain-select").find(":selected").val();
+        if(chain != 0) {
+            recalcLegend(traveltimesjson, "transit", chain);
+        }
     })
     $("#btnCar").click(function() {
         $(this).addClass("iconfilter-clicked")
         $("#btnBike").removeClass("iconfilter-clicked")
         $("#btnTransit").removeClass("iconfilter-clicked")
         $("#btnWalk").removeClass("iconfilter-clicked")
+        let chain = $("#chain-select").find(":selected").val();
+        if (chain != 0 ) {
+            recalcLegend(traveltimesjson, "car", chain);
+        }
     })
 
 
@@ -383,7 +490,6 @@ $(document).ready(function() {
     .then(response => response.json())
     .then(response => {
         superjson = response;
-        console.log(superjson);
         // get a set of unique grocery chains
         let supermarkets = superjson.features;
 
