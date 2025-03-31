@@ -37,101 +37,13 @@ const quantile = (arr, q) => {
 
 let traveltimesjson; // need this variable in several places, define it in the outermost scope
 
-// recalculate the legend
-// used by several click handlers
-// json the fetched json data holding the travel times
-// mode the selected mode of transport
-// chain the selected grocery store chain
-const recalcLegend = (json, mode, chain) => {
-    $("#legend").html("<h6>Travel Times</h6>"); // clear previous legend
-
-    traveltimesjson = json;
-
-    // get quartiles for choropleth scaling
-    let ttimes = [];
-
-    traveltimesjson.features.forEach((label, i) => {
-        let feature = traveltimesjson.features[i];
-        let props = feature.properties;
-        if(props.brand == chain && props.transport_mode == mode) { // only use travel times for selected brand and method
-            let travtime = props.travel_time;
-            if(travtime != null) {
-                ttimes.push(travtime) 
-            }
-            
-        }
-
-    })
-
-    const q1 = quantile(ttimes, 0.25);
-    const med = quantile(ttimes, 0.5);
-    const q3 = quantile(ttimes, 0.75);
-    const upper = Math.max.apply(null, ttimes);
-
-    // build and render legend
-    // declare legend variable using legend div tag
-    const legend = document.getElementById("legend");
-
-    let legendlabels = [
-        '0-' + (q1-1) + ' minutes',
-        q1 + '-' + (med-1) + ' minutes',
-        med + '-' + (q3-1) + ' minutes',
-        q3 + '-' + (upper-1) + ' minutes',
-        upper + ' minutes'
-    ]
-
-    const legendcolors = [
-        '#fef0d9',
-        '#fdcc8a',
-        '#fc8d59',
-        '#e34a33',
-        '#b30000'
-    ]
-
-    // for each legend label, create a block to put the color and label in
-    legendlabels.forEach((label, i) => {
-        const color = legendcolors[i];
-
-        const item = document.createElement('div') //each layer gets a 'row' - this isn't in the legend yet, we do this later
-        const key = document.createElement('span') //add a 'key' to the row. A key will be the colour circle
-
-        key.className = 'legend-key'; //the key will take on the shape and style properties defined in css
-        key.style.backgroundColor = color; // the background color is retreived from teh layers array
-
-        const value = document.createElement('span'); //add a value variable to the 'row' in the legend
-        value.innerHTML = `${label}`; //give the value variable text based on the label
-
-        item.appendChild(key); //add the key (colour cirlce) to the legend row
-        item.appendChild(value); //add the value to the legend row
-    
-        legend.appendChild(item); //add row to the legend
-    })
-
-    
-
-    // update the step color scheme on the hexgrid layer
-    map.setPaintProperty('res7-poly', 'fill-color', 
-        [
-            "step",
-            ["get", "travel_time"],
-            "#fef0d9",
-            q1, "#fdcc8a",
-            med, "#fc8d59",
-            q3, "#e34a33",
-            upper, "#b30000"
-        ]
-    )
-
-    map.setPaintProperty('res7-poly', 'fill-opacity', [
-        'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                1,  // opaque when hovered on
-                0.5 // semi-transparent when not hovered on
-    ])
-
-    // map.setFilter('res7-poly', ['all', ['has', 'travel_time'], ['!=', ['get', 'travel_time'], null]])
-
-    
+const updateFilter = (chain, mode) => {
+    map.setFilter('res7-poly', ['all', ['all', 
+        // ['has', 'travel_time'],
+        // ['!=', ['get', 'travel_time'], null],
+        ['==', ['get', 'brand'], chain],
+     ['==', ['get', 'transport_mode'], mode]
+    ]]);
 }
 
 map.on('load', () => {
@@ -425,8 +337,6 @@ map.on('load', () => {
                 ]]);
 
                 map.setFilter('super-point', ['==', ['get','brand'], sel]); // show only supermarkets that match requested brand
-
-                recalcLegend(response, currmode, sel)
             }
         })
     })
@@ -466,9 +376,7 @@ $(document).ready(function() {
         $("#btnTransit").removeClass("iconfilter-clicked")
         $("#btnCar").removeClass("iconfilter-clicked")
         let chain = $("#chain-select").find(":selected").val();
-        if(chain != 0) {
-            recalcLegend(traveltimesjson, "walk", chain);
-        }
+        updateFilter(chain, "walk")
     })
     $("#btnBike").click(function() {
         $(this).addClass("iconfilter-clicked")
@@ -476,9 +384,7 @@ $(document).ready(function() {
         $("#btnTransit").removeClass("iconfilter-clicked")
         $("#btnCar").removeClass("iconfilter-clicked")
         let chain = $("#chain-select").find(":selected").val();
-        if(chain != 0) {
-            recalcLegend(traveltimesjson, "bike", chain);
-        }
+        updateFilter(chain, "bike")
     })
     $("#btnTransit").click(function() {
         $(this).addClass("iconfilter-clicked")
@@ -486,9 +392,7 @@ $(document).ready(function() {
         $("#btnWalk").removeClass("iconfilter-clicked")
         $("#btnCar").removeClass("iconfilter-clicked")
         let chain = $("#chain-select").find(":selected").val();
-        if(chain != 0) {
-            recalcLegend(traveltimesjson, "transit", chain);
-        }
+        updateFilter(chain, "transit")
     })
     $("#btnCar").click(function() {
         $(this).addClass("iconfilter-clicked")
@@ -496,9 +400,7 @@ $(document).ready(function() {
         $("#btnTransit").removeClass("iconfilter-clicked")
         $("#btnWalk").removeClass("iconfilter-clicked")
         let chain = $("#chain-select").find(":selected").val();
-        if (chain != 0 ) {
-            recalcLegend(traveltimesjson, "car", chain);
-        }
+        updateFilter(chain, "car")
     })
 
 
