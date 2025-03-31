@@ -159,12 +159,6 @@ map.on('load', () => {
         'generateId' : true
     })
 
-    map.addSource('sample-data', {
-        type: 'geojson',
-        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/walmart_transit_sample.geoJSON',
-        'generateId': true //This ensures that all features have unique IDs 
-    })
-
     map.addSource('res7-data', {
         type: 'geojson',
         data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/all_travel_times_res7.geojson',
