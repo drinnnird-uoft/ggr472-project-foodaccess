@@ -38,7 +38,7 @@ const quantile = (arr, q) => {
 let traveltimesjson; // need this variable in several places, define it in the outermost scope
 
 const updateFilter = (chain, mode) => {
-    map.setFilter('res7-poly', ['all', ['all', 
+    map.setFilter('res8-poly', ['all', ['all', 
         // ['has', 'travel_time'],
         // ['!=', ['get', 'travel_time'], null],
         ['==', ['get', 'brand'], chain],
@@ -74,7 +74,7 @@ map.on('load', () => {
     // torboundary-data - toronto boundary line
     // torneigh-data is toronto neighbourhoods (polygons)
     // supermarkets.geoJSON is a point feature collection of all the supermarkets in Toronto
-    // all_travel_times_res7.geojson is the travel time data and hexgrids
+    // all_travel_times_res8.geojson is the travel time data and hexgrids
     map.addSource('torboundary-data', {
         type: 'geojson',
         data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/tor_boundry.geojson'
@@ -91,11 +91,17 @@ map.on('load', () => {
         'generateId' : true
     })
 
-    map.addSource('res7-data', {
+    map.addSource('res8-data', {
         type: 'geojson',
-        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/all_travel_times_res7.geojson',
+        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/all_travel_times_res8.geojson',
         'generateId' : true
     })
+
+    // map.addSource('res8-data', {
+    //     type: 'vector',
+    //     url: 'mapbox://drinnird.9u36r108',
+    //     promoteId: {"all_travel_times_res8-2sh0kd":"id"}
+    // })
 
     // draw features from geoJSON source files
 
@@ -140,18 +146,18 @@ map.on('load', () => {
     });
 
     // set up a mousemove event handler to toggle a feature state on the heatmap layer
-    map.on('mousemove', 'res7-poly', (e) => {
+    map.on('mousemove', 'res8-poly', (e) => {
         map.getCanvas().style.cursor = 'pointer'; // update the mouse cursor to a pointer to indicate clickability
         if (e.features.length > 0) {
             if (hoveredPolygonId !== null) {
                 map.setFeatureState(
-                    { source: 'res7-data', id: hoveredPolygonId },
+                    { source: 'res8-data', id: hoveredPolygonId },
                     { hover: false }
                 );
             }
             hoveredPolygonId = e.features[0].id;
             map.setFeatureState(
-                { source: 'res7-data', id: hoveredPolygonId },
+                { source: 'res8-data', id: hoveredPolygonId },
                 { hover: true }
             );
         }
@@ -159,11 +165,11 @@ map.on('load', () => {
 
     // When the mouse leaves the heatmap layer, update the feature state of the
     // previously hovered feature.
-    map.on('mouseleave', 'res7-poly', () => {
+    map.on('mouseleave', 'res8-poly', () => {
         map.getCanvas().style.cursor = ''; // put the mouse cursor back to default
         if (hoveredPolygonId !== null) {
             map.setFeatureState(
-                { source: 'res7-data',id: hoveredPolygonId },
+                { source: 'res8-data',id: hoveredPolygonId },
                 { hover: false }
             );
         }
@@ -204,7 +210,7 @@ map.on('load', () => {
 
     // go through travel time data to build color ramp
 
-    fetch('https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/all_travel_times_res7.geojson')
+    fetch('https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/all_travel_times_res8.geojson')
     .then(response => response.json())
     .then(response => {
         traveltimesjson = response;
@@ -268,9 +274,10 @@ map.on('load', () => {
         })
 
         map.addLayer({
-            'id' : 'res7-poly',
+            'id' : 'res8-poly',
             'type' : 'fill',
-            'source' : 'res7-data',
+            'source' : 'res8-data',
+            // 'source-layer' : 'all_travel_times_res8-2sh0kd',
             'paint': {
                 "fill-color" : [
                     "step",
@@ -294,16 +301,16 @@ map.on('load', () => {
         })
 
         // hide the hexgrid at first until something is selected in the dropdown
-        map.setLayoutProperty("res7-poly", 'visibility', 'none');
+        map.setLayoutProperty("res8-poly", 'visibility', 'none');
 
         // handle clicking on a hexgrid item
-        map.on('click', 'res7-poly', (e) => {
+        map.on('click', 'res8-poly', (e) => {
             const coordinates = e.features[0].geometry.coordinates.slice();
             const travel_time = e.features[0].properties.travel_time;
 
             const sel_travel_mode = $(".iconfilter-clicked");
             if(sel_travel_mode.length == 1) {
-                const pieces = sel_travel_mode[0].id.split("btn");
+                const pieces = sel_travel_mode[0].id.split("btn"); // icons are named with convention btnWalk, btnTransit etc
                 if (travel_time !== undefined) {
                     $("#click-info").html("Travel time to " + $("#chain-select").val() + " by " + pieces[1] + " is " + travel_time + "m.");
                 } else {
@@ -333,12 +340,12 @@ map.on('load', () => {
                 // if something has been selected
                 // show the hexgrid for that selection
                 
-                map.setLayoutProperty("res7-poly", "visibility", "visible");
+                map.setLayoutProperty("res8-poly", "visibility", "visible");
 
                 // big filter expression that means 
                 // show hexgrid cells that match the currently selected travel mode AND brand
                 // AND also require that the travel time not be null or missing
-                map.setFilter('res7-poly', ['all', ['all', 
+                map.setFilter('res8-poly', ['all', ['all', 
                         // ['has', 'travel_time'],
                         // ['!=', ['get', 'travel_time'], null],
                         ['==', ['get', 'brand'], sel],
