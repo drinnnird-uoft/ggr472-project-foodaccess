@@ -87,7 +87,7 @@ map.on('load', () => {
 
     map.addSource('super-data', {
         type: 'geojson',
-        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets.geoJSON',
+        data: 'https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets-WGS84.geojson',
         'generateId' : true
     })
 
@@ -180,7 +180,7 @@ map.on('load', () => {
 
         // Copy coordinates array.
         const coordinates = e.features[0].geometry.coordinates.slice();
-        const description = e.features[0].properties.name;
+        const description = e.features[0].properties.brand;
 
         // Ensure that if the map is zoomed out such that multiple
         // copies of the feature are visible, the popup appears
@@ -300,7 +300,12 @@ map.on('load', () => {
             const sel_travel_mode = $(".iconfilter-clicked");
             if(sel_travel_mode.length == 1) {
                 const pieces = sel_travel_mode[0].id.split("btn");
-                $("#click-info").html("Travel time to " + $("#chain-select").val() + " by " + pieces[1] + " is " + travel_time + "m.");
+                if (travel_time !== undefined) {
+                    $("#click-info").html("Travel time to " + $("#chain-select").val() + " by " + pieces[1] + " is " + travel_time + "m.");
+                } else {
+                    $("#click-info").html("Travel time to " + $("#chain-select").val() + " by " + pieces[1] + " is > 120m or could not be estimated.");
+                }
+                
             }
         })
 
@@ -409,7 +414,7 @@ $(document).ready(function() {
     let brands = [];
     let brandselect = document.getElementById("chain-select");
 
-    fetch('https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets.geoJSON')
+    fetch('https://drinnnird-uoft.github.io/ggr472-project-foodaccess/data/supermarkets-WGS84.geojson')
     .then(response => response.json())
     .then(response => {
         superjson = response;
@@ -424,8 +429,6 @@ $(document).ready(function() {
                 }
             }
         });
-
-        brands.push("Walmart"); // debugging, remove later
 
         brands.sort();
 
