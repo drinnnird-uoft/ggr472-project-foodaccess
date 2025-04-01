@@ -221,8 +221,9 @@ map.on('load', () => {
         })
 
         const q1 = quantile(ttimes, 0.25);
-        const med = quantile(ttimes, 0.5);
-        const q3 = quantile(ttimes, 0.75);
+        const q2 = quantile(ttimes, 0.4);
+        const q3 = quantile(ttimes, 0.6);
+        const q4 = quantile(ttimes, 0.8);
         const upper = Math.max.apply(null, ttimes);
 
         // build and render legend
@@ -231,18 +232,20 @@ map.on('load', () => {
 
         let legendlabels = [
             '0-' + (q1-1) + ' minutes',
-            q1 + '-' + (med-1) + ' minutes',
-            med + '-' + (q3-1) + ' minutes',
-            q3 + '-' + (upper-1) + ' minutes',
+            q1 + '-' + (q2-1) + ' minutes',
+            q2 + '-' + (q3-1) + ' minutes',
+            q3 + '-' + (q4-1) + ' minutes',
+            q4 + '-' + (upper-1) + ' minutes',
             upper + ' minutes'
         ]
 
         const legendcolors = [
-            '#fef0d9',
-            '#fdcc8a',
-            '#fc8d59',
-            '#e34a33',
-            '#b30000'
+            '#fee5d9',
+            '#fcbba1',
+            '#fc9272',
+            '#fb6a4a',
+            '#de2d26',
+            '#a50f15'
         ]
 
         // for each legend label, create a block to put the color and label in
@@ -272,11 +275,12 @@ map.on('load', () => {
                 "fill-color" : [
                     "step",
                     ["get", "travel_time"],
-                    "#fef0d9",
-                    q1, "#fdcc8a",
-                    med, "#fc8d59",
-                    q3, "#e34a33",
-                    upper, "#b30000"
+                    "#fee5d9",
+                    q1, "#fcbba1",
+                    q2, "#fc9272",
+                    q3, "#fb6a4a",
+                    q4, "#de2d26",
+                    upper, "#a50f15"
                 ],
                 'fill-opacity': [ // set the fill opacity based on a feature state which is set by a hover event listener
                 'case',
